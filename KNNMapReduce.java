@@ -3,14 +3,9 @@ import javax.xml.soap.Text;
 //package KNNMapReduce;
 
 public class KNNMapReduce {
-	/*
-	 * class KNNMapper for processing map step
-	 * -receive 3 arguments
-	 * 		1. training set(path in HDFS)
-	 * 		2. path for result
-	 * 		3. test set
-	 * 		4. number of neighbours(k) for vote
-	*/
+	
+	//class KNNMapper for processing map step
+
 	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
 	{	
 		//pre-processing data
@@ -44,7 +39,11 @@ public class KNNMapReduce {
 		job.setReducerClass(KNNReducer.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(IntWritable.class);
-		
+		//sending parameters to MR
+		//1. training set(path in HDFS)
+		//2. path for result
+		//3. test set
+		//4. number of neighbours(k) for vote
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		
