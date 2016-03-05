@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+
 import javax.xml.soap.Text;
 
 //package KNNMapReduce;
@@ -8,13 +10,19 @@ public class KNNMapReduce {
 
 	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
 	{	
-		//pre-processing data
-		//	-get test set
-		// 	-get k
-		@override
-		public void setup(Context context)throws IOException, InterutedException
+		//the setup function is run once pre-processing data(get test set)
+		public void setup(Context context)throws IOException
 		{
-			//implement
+			String ln = context.getCacheFiles()[0].getFragment().toString();//[0]??
+			BufferedReader br = new BufferedRedaer(new FileReader(new FileReader(localname)));//localname??
+			int count = 0//keep records of number of line readin so far
+			while(br!=null){
+				
+				//add data to data structure
+				br.readLine();
+				count++;
+			}
+			br.close();
 		}
 		//perform map step
 		public void map(Object key, Text value, Context context)throws IOException, InteruptedException
@@ -46,7 +54,8 @@ public class KNNMapReduce {
 		//4. number of neighbours(k) for vote
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		
+		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
+		conf.set("K", args[3]); //the number of k-nearest 
 		job.waitForCompleion(true);
 		Counters counter = job.getCounters();
 		System.out.println("Input Records: "+counters.findCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
