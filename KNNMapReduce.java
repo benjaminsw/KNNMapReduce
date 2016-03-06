@@ -6,21 +6,61 @@ import javax.xml.soap.Text;
 
 public class KNNMapReduce {
 	
+	//variable test is to store the testing data
+	//http://stackoverflow.com/questions/10416653/best-way-to-store-a-table-of-data
+    private ArrayList<rowData> test = new ArrayList<rowData>();
+    
+    //class row to create instance for each row
+    public static class rowData
+    {	int age;
+    	int income;
+    	String marriage;
+    	String gender;
+    	int children;
+    	
+    	public void rowData(){}
+    	public void rowData(String rowInput)
+    	{
+    		String[] features = rowInput.split(" ");
+    		this.age = Integer.parseInt(features[0]);
+    		this.income = Integer.parseInt(features[1]);
+    		this.marriage = features[2];
+    		this.gender = features[3];
+    		this.children = Integer.parseInt(features[4]);
+    	}
+    	public int getAge(){
+    		return age;
+    	}
+    	public int getIncome(){
+    		return income;
+    	}
+    	public String getMarriage(){
+    		return marriage;
+    	}
+    	public String getGender(){
+    		return gender;
+    	}
+    	public int getChildren(){
+    		return children;
+    	}
+    }
+	
 	//class KNNMapper for processing map step
-
 	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
 	{	
 		//the setup function is run once pre-processing data(get test set)
 		public void setup(Context context)throws IOException
-		{
-			String ln = context.getCacheFiles()[0].getFragment().toString();//[0]??
-			BufferedReader br = new BufferedRedaer(new FileReader(new FileReader(localname)));//localname??
-			int count = 0//keep records of number of line readin so far
+		{	
+			//get file from context
+			Configuration conf = context.getConfiguaration();
+			URI[] cacheFiles = context.getCacheFiles();
+			String [] fn = cacheFiles[0].toString().split('#');
+			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
+			//int count = 0//keep records of number of line readin so far
 			while(br!=null){
-				
+				test.add(new rowData(br));
 				//add data to data structure
-				br.readLine();
-				count++;
+				//count++;
 			}
 			br.close();
 		}
