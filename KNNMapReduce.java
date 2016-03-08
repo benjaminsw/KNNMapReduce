@@ -92,6 +92,39 @@ public class KNNMapReduce {
     	}
     	
     }
+    //class DistLabelWritable extend writable
+    //http://hadooptutorial.info/creating-custom-hadoop-writable-data-type/
+    public class DistAndLabelWritable implements Writable<DistAndLabelWritable>
+    {
+    	public double dist;
+    	public String label;
+    	public DistAndLabelWritable(){}
+    	public DistAndLabelWritable(double dist, String label)
+    	{
+    		this.dist = dist;
+    		this.label = label;
+    	}
+    	public void setWritable(IntWritable dist, Text label)
+    	{
+    		this.dist = dist;
+    		this.label = label;
+    	}
+    	@Override
+    	//overiding default readFiles method
+    	//it de-serialises thr byte stream data
+    	public void readFields(DataInput in)throws IOException
+    	{
+    		dist.readFeilds(in);
+    		label.readFields(in);
+    	}
+    	@Override
+    	public void write(DataOutput out)throws IOException
+    	{
+    		dist.write(out);
+    		label.write(out);
+    	}
+    	
+    }
     
 	//class KNNMapper for processing map step
 	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
@@ -128,6 +161,7 @@ public class KNNMapReduce {
 			String str;
 			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
 			str = br.readLine();
+			//RowData test = new RowData();
 			while(br!=null){
 				//add data to data structure
 				test.add(new RowData(str));
@@ -155,9 +189,8 @@ public class KNNMapReduce {
 				testChildren = t.getChildren();
 				ComputeDistance dist = new ComputeDistance(testAge, testIncome, testMarriage, testGender, testChildren,
 															trainAge, trainIncome, trainMarriage, trainGender, trainChildren);
-				//totalDist = dist.getTotalDistance
-				//context.write(rLine, )
-				
+				totalDist = dist.getTotalDistance();
+				context.write(t, new DistAndLabelWritable(totalDist, trainLabel));
 			}
 			
 		}
