@@ -176,10 +176,7 @@ public class KNNMapReduce {
 
 		//perform map step
 		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedException
-		{	
-			private Text distAndLabel;
- 
-			
+		{
 			String rLine = value.toString();
 			StringTokenizer tokens = new StringTokenizer(rLine, ",");
 			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
@@ -197,10 +194,7 @@ public class KNNMapReduce {
 				ComputeDistance dist = new ComputeDistance(testAge, testIncome, testMarriage, testGender, testChildren,
 															trainAge, trainIncome, trainMarriage, trainGender, trainChildren);
 				totalDist = dist.getTotalDistance();
-				strDistAndLabel = totalDist.toString()+","+trainLabel;
-				distAndLabel = new Text();
-				distAndLabel.set(strDistAndLabel);
-				context.write(t.toString(), distAndLabel);
+				context.write(t, new DistAndLabelWritable(totalDist, trainLabel));
 			}
 			
 		}
