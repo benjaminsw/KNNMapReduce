@@ -207,16 +207,26 @@ public class KNNMapReduce {
 	}
 	//---------------------END MAP------------------------
 	public static class KNNReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
+		
+		Map<String, Integer> labelDistTuple = new HashMap<String, Integer>();
+		String key;
+		double value;
+		
 		//the setup function is run once pre-processing data(get test set)
 		public void setup(Context context)throws IOException
 		{
 			Configuration conf =  context.getConfiguration();
 			Int K = conf.getInt("K");
 		}
-		public void reducer(Text key, Iterable<IntWritable> values, Context cotext)throws IOException, InteruptedException
+		public void reducer(Text key, Iterable<Text> values, Context cotext)throws IOException, InteruptedException
 		{
-			HashMap<String, Integer> map = new HashMap<String, Integer>();
-			String 
+			for(Text t: values)
+			{
+				String[] keyvalue = values.split(","); 
+				labelDistTuple.put(keyvalue[0], Integer.parseInt(keyvalue[1]));
+			}
+			
+			
 		}
 	}
 	//--------------------END REDUCE----------------------
