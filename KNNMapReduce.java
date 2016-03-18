@@ -214,9 +214,24 @@ public class KNNMapReduce {
 		
 		//the setup function is run once pre-processing data(get test set)
 		public void setup(Context context)throws IOException
-		{
+		{	
+			//get file from context
 			Configuration conf =  context.getConfiguration();
 			Int K = conf.getInt("K");
+			//get test file
+			URI[] cacheFiles = context.getCacheFiles();
+			String [] fn = cacheFiles[0].toString().split('#');
+			String str;
+			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
+			str = br.readLine();
+			//RowData test = new RowData();
+			while(br!=null){
+				//add data to data structure
+				test.add(new RowData(str));
+				str = br.readLine();
+			}
+			br.close();
+		}
 		}
 		public void reducer(Text key, Iterable<Text> values, Context cotext)throws IOException, InteruptedException
 		{
@@ -225,42 +240,21 @@ public class KNNMapReduce {
 				String[] keyvalue = values.split(","); 
 				labelDistTuple.put(Integer.parseInt(keyvalue[1]),keyvalue[0]);
 			}
-			LinkedHashMap sortedDistLabel = sortHashMapByValuesD(labelDistTuple);
-			//get only labels to do a majority vote
-			List<Long> keys = new ArrayList<>(sortedDistLabel.keySet());
+			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
+			Map<Integer, String> sortedMap = 
+					labelDistTuple.entrySet().stream()
+				    .sorted(Entry.comparingByValue())
+				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
+				                              (e1, e2) -> e1, LinkedHashMap::new));
+			//get only labels to do a majority vote: http://stackoverflow.com/questions/1026723/how-to-convert-a-map-to-list-in-java
+			List<String> labList = new ArrayList<String>(sortedMap.values());
+			
+			Integer maxOccurredElement = labList.stream()
+			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
+			                        Collections.frequency(labList, o2))).orElse(null);
 			
 		}
-		//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-		public LinkedHashMap sortHashMapByValuesD(HashMap passedMap) {
-			   List mapKeys = new ArrayList(passedMap.keySet());
-			   List mapValues = new ArrayList(passedMap.values());
-			   Collections.sort(mapValues);
-			   Collections.sort(mapKeys);
-
-			   LinkedHashMap sortedMap = new LinkedHashMap();
-
-			   Iterator valueIt = mapValues.iterator();
-			   while (valueIt.hasNext()) {
-			       Object val = valueIt.next();
-			       Iterator keyIt = mapKeys.iterator();
-
-			       while (keyIt.hasNext()) {
-			           Object key = keyIt.next();
-			           String comp1 = passedMap.get(key).toString();
-			           String comp2 = val.toString();
-
-			           if (comp1.equals(comp2)){
-			               passedMap.remove(key);
-			               mapKeys.remove(key);
-			               sortedMap.put((String)key, (Double)val);
-			               break;
-			           }
-
-			       }
-
-			   }
-			   return sortedMap;
-			}
+		
 		
 	}
 	//--------------------END REDUCE----------------------
