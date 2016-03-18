@@ -224,7 +224,7 @@ public class KNNMapReduce {
 		job.setCombinerClass(KNNReducer.class);
 		job.setReducerClass(KNNReducer.class);
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
+		job.setOutputValueClass(Text.class);
 		//sending parameters to MR
 		//1. training set(path in HDFS)
 		//2. path for result
