@@ -8,37 +8,6 @@ import javax.xml.soap.Text;
 
 public class KNNMapReduce {
 	
-	public class DistAndLabelWritable implements Writable<DistAndLabelWritable>
-    {
-    	public double dist;
-    	public String label;
-    	public DistAndLabelWritable(){}
-    	public DistAndLabelWritable(double dist, String label)
-    	{
-    		this.dist = dist;
-    		this.label = label;
-    	}
-    	public void setWritable(IntWritable dist, Text label)
-    	{
-    		this.dist = dist;
-    		this.label = label;
-    	}
-    	@Override
-    	//overiding default readFiles method
-    	//it de-serialises thr byte stream data
-    	public void readFields(DataInput in)throws IOException
-    	{
-    		dist.readFeilds(in);
-    		label.readFields(in);
-    	}
-    	@Override
-    	public void write(DataOutput out)throws IOException
-    	{
-    		dist.write(out);
-    		label.write(out);
-    	}
-    	
-    }
 	
     //class row to create instance for each row
     public static class RowData
@@ -161,7 +130,7 @@ public class KNNMapReduce {
 		{	
 			//get file from context
 			Configuration conf = context.getConfiguaration();
-			URI[] cacheFiles = context.getCacheFiles();
+			URI [] cacheFiles = context.getCacheFiles();
 			String [] fn = cacheFiles[0].toString().split('#');
 			String str;
 			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
