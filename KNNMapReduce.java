@@ -101,11 +101,11 @@ public class KNNMapReduce {
     		this.trainChildren = trainChildren;
     	}
 
-    	public double pseudoEuclideanDist(x1,x2)
+    	public double pseudoEuclideanDist(double x1,double x2)
     	{
     		return Math.pow((x1-x2),2);
     	}
-    	public double hammingDist(String a Stirng b)
+    	public double hammingDist(String a, Stirng b)
     	{
     		if(a==b)
     		{
@@ -177,9 +177,7 @@ public class KNNMapReduce {
 		//perform map step
 		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedException
 		{	
-			private Text distAndLabel;
- 
-			
+			private Text distAndLabel;		
 			String rLine = value.toString();
 			StringTokenizer tokens = new StringTokenizer(rLine, ",");
 			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
@@ -237,7 +235,7 @@ public class KNNMapReduce {
 				                              (e1, e2) -> e1, LinkedHashMap::new));
 			//get only labels to do a majority vote: http://stackoverflow.com/questions/1026723/how-to-convert-a-map-to-list-in-java
 			List<String> labList = new ArrayList<String>(sortedMap.values());
-			
+			//get most elements occued: http://stackoverflow.com/questions/19031213/java-get-most-common-element-in-a-list
 			Integer maxOccurredElement = labList.stream()
 			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
 			                        Collections.frequency(labList, o2))).orElse(null);
