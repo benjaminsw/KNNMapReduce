@@ -132,7 +132,8 @@ public class KNNMapReduce {
     
 	//class KNNMapper for processing map step
 	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
-	{		
+	{	
+		private Text distAndLabel;	
 		//variable test is to store the testing data
 		//http://stackoverflow.com/questions/10416653/best-way-to-store-a-table-of-data
 	    private ArrayList<RowData> test = new ArrayList<RowData>();
@@ -177,7 +178,7 @@ public class KNNMapReduce {
 		//perform map step
 		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedException
 		{	
-			private Text distAndLabel;		
+				
 			String rLine = value.toString();
 			StringTokenizer tokens = new StringTokenizer(rLine, ",");
 			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
@@ -263,7 +264,7 @@ public class KNNMapReduce {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
-		Int k = Integer.parseInt(args[3]);
+		int k = Integer.parseInt(args[3]);
 		conf.setInt("K", k); //the number of k-nearest 
 		job.waitForCompleion(true);
 		//Counters counter = job.getCounters();
