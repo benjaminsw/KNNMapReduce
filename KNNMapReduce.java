@@ -15,7 +15,7 @@ public class KNNMapReduce {
     	int income;
     	String marriage;
     	String gender;
-    	int children;
+    	String children;
     	
     	public RowData(){}
     	public RowData(String rowInput)
@@ -51,7 +51,7 @@ public class KNNMapReduce {
     	double trainIncome, testIncome;
     	String trainMarriage, testMarrige;
     	String trainGender, testGender;
-    	double trainChildren, testChildren;
+    	String trainChildren, testChildren;
     	String trainLabel;
     	double totalDistance;
     	public ComputeDistance(){}
@@ -187,7 +187,7 @@ public class KNNMapReduce {
 		{	
 			//get K from context
 			Configuration conf =  context.getConfiguration();
-			Int K = conf.getInt("K");
+			int K = conf.getInt("K");
 
 		}
 		public void reducer(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
@@ -198,7 +198,7 @@ public class KNNMapReduce {
 				labelDistTuple.put(Integer.parseInt(keyvalue[1]),keyvalue[0]);
 			}
 			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-			Map<Integer, String> sortedMap = 
+			Map<double, String> sortedMap = 
 					labelDistTuple.entrySet().stream()
 				    .sorted(Entry.comparingByValue())
 				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
