@@ -215,23 +215,10 @@ public class KNNMapReduce {
 		//the setup function is run once pre-processing data(get test set)
 		public void setup(Context context)throws IOException
 		{	
-			//get file from context
+			//get K from context
 			Configuration conf =  context.getConfiguration();
 			Int K = conf.getInt("K");
-			//get test file
-			URI[] cacheFiles = context.getCacheFiles();
-			String [] fn = cacheFiles[0].toString().split('#');
-			String str;
-			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
-			str = br.readLine();
-			//RowData test = new RowData();
-			while(br!=null){
-				//add data to data structure
-				test.add(new RowData(str));
-				str = br.readLine();
-			}
-			br.close();
-		}
+
 		}
 		public void reducer(Text key, Iterable<Text> values, Context cotext)throws IOException, InteruptedException
 		{
