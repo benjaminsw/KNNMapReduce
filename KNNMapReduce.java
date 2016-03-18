@@ -74,7 +74,7 @@ public class KNNMapReduce {
     	{
     		return Math.pow((x1-x2),2);
     	}
-    	public double hammingDist(String a, Stirng b)
+    	public double hammingDist(String a, String b)
     	{
     		if(a==b)
     		{
@@ -190,7 +190,7 @@ public class KNNMapReduce {
 			Int K = conf.getInt("K");
 
 		}
-		public void reducer(Text key, Iterable<Text> values, Context cotext)throws IOException, InteruptedException
+		public void reducer(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
 		{
 			for(Text t: values)
 			{
