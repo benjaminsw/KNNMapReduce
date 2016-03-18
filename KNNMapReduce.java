@@ -177,7 +177,7 @@ public class KNNMapReduce {
 	public static class KNNReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
 		
 		
-		Map<String, Integer> labelDistTuple = new HashMap<String, Integer>();
+		Map<double, String> labelDistTuple = new HashMap<double, String>();
 		private Text label = new Text();
 		String key;
 		double value;
@@ -195,7 +195,7 @@ public class KNNMapReduce {
 			for(Text t: values)
 			{
 				String[] keyvalue = values.split(","); 
-				labelDistTuple.put(Integer.parseInt(keyvalue[1]),keyvalue[0]);
+				labelDistTuple.put(Double.parseDouble(keyvalue[1]),keyvalue[0]);
 			}
 			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
 			Map<double, String> sortedMap = 
