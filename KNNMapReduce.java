@@ -208,7 +208,9 @@ public class KNNMapReduce {
 	//---------------------END MAP------------------------
 	public static class KNNReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
 		
+		
 		Map<String, Integer> labelDistTuple = new HashMap<String, Integer>();
+		private Text label = new Text();
 		String key;
 		double value;
 		
@@ -239,7 +241,8 @@ public class KNNMapReduce {
 			Integer maxOccurredElement = labList.stream()
 			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
 			                        Collections.frequency(labList, o2))).orElse(null);
-			
+			label.set(maxOccurredElement);
+			context.write(key, label);
 		}
 		
 		
