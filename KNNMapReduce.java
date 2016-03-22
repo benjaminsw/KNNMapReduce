@@ -26,6 +26,14 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 //package KNNMapReduce;
@@ -230,7 +238,7 @@ public class KNNMapReduce {
 			//get only labels to do a majority vote: http://stackoverflow.com/questions/1026723/how-to-convert-a-map-to-list-in-java
 			List<String> labList = new ArrayList<String>(sortedMap.values());
 			//get most elements occued: http://stackoverflow.com/questions/19031213/java-get-most-common-element-in-a-list
-			Integer maxOccurredElement = labList.stream()
+			String maxOccurredElement = labList.stream()
 			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
 			                        Collections.frequency(labList, o2))).orElse(null);
 			label.set(maxOccurredElement);
