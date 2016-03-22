@@ -18,8 +18,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.io.BufferedReader;
 import java.util.StringTokenizer;
-import javax.security.auth.login.Configuration;
-import javax.xml.soap.Text;
+//import javax.security.auth.login.Configuration;
+//import javax.xml.soap.Text;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -81,7 +81,7 @@ public class KNNMapReduce {
     {
     	double trainAge, testAge;
     	double trainIncome, testIncome;
-    	String trainMarriage, testMarrige;
+    	String trainMarriage, testMarriage;
     	String trainGender, testGender;
     	String trainChildren, testChildren;
     	String trainLabel;
@@ -92,7 +92,7 @@ public class KNNMapReduce {
     	{
     		this.testAge = testAge;
     		this.testIncome = testIncome;
-    		this.testMarrige = testMarriage;
+    		this.testMarriage = testMarriage;
     		this.testGender = testGender;
     		this.testChildren = testChildren;
     		this.trainAge = trainAge;
@@ -166,7 +166,7 @@ public class KNNMapReduce {
 			URI [] cacheFiles = context.getCacheFiles();
 			String [] fn = cacheFiles[0].toString().split('#');
 			String str;
-			BufferedReader br = new BufferedRedaer(new FileReader(fn[1]));//localname??
+			BufferedReader br = new BufferedReader(new FileReader(fn[1]));//localname??
 			str = br.readLine();
 			//RowData test = new RowData();
 			while(br!=null){
@@ -178,7 +178,7 @@ public class KNNMapReduce {
 		}
 
 		//perform map step
-		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedException
+		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedIOException
 		{	
 			String strDistAndLabel;	
 			String rLine = value.toString();
