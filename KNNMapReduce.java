@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
@@ -24,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 
 
 //package KNNMapReduce;
@@ -216,11 +218,11 @@ public class KNNMapReduce {
 		{
 			for(Text t: values)
 			{
-				String[] keyvalue = values.split(","); 
+				String[] keyvalue = t.split(","); 
 				labelDistTuple.put(Double.parseDouble(keyvalue[1]),keyvalue[0]);
 			}
 			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-			Map<String, double> sortedMap = 
+			Map<double, String> sortedMap = 
 					labelDistTuple.entrySet().stream()
 				    .sorted(Entry.comparingByValue())
 				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
