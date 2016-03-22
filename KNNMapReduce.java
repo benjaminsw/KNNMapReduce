@@ -132,12 +132,13 @@ public class KNNMapReduce {
     
     
 	//class KNNMapper for processing map step
-	public static class KNNMapper extends Mapper<Object, Text, Text, IntWritable>
+	public static class KNNMapper extends Mapper<Object, Text, Text, Text>
 	{	
 		private Text distAndLabel;	
 		//variable test is to store the testing data
 		//http://stackoverflow.com/questions/10416653/best-way-to-store-a-table-of-data
 	    private ArrayList<RowData> test = new ArrayList<RowData>();
+	    String strTest;
 	    double trainAge, testAge;
 	    double trainIncome, testIncome;
 	    String trainMarriage, testMarriage;
@@ -152,7 +153,7 @@ public class KNNMapReduce {
 	    double minIncome = 50000;
 	    double maxIncome = 67789;
 	    
-		//normalise continous data
+		//normalise continuous data
 		public double scaling(double x, double min, double max){
 			return (x-min)/(max-min);
 		}
@@ -179,7 +180,7 @@ public class KNNMapReduce {
 		//perform map step
 		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedException
 		{	
-				
+			String strDistAndLabel;	
 			String rLine = value.toString();
 			StringTokenizer tokens = new StringTokenizer(rLine, ",");
 			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
@@ -197,19 +198,20 @@ public class KNNMapReduce {
 				ComputeDistance dist = new ComputeDistance(testAge, testIncome, testMarriage, testGender, testChildren,
 															trainAge, trainIncome, trainMarriage, trainGender, trainChildren);
 				totalDist = dist.getTotalDistance();
-				strDistAndLabel = totalDist.toString()+","+trainLabel;
+				strDistAndLabel = String.valueOf(totalDist)+","+trainLabel;
 				distAndLabel = new Text();
 				distAndLabel.set(strDistAndLabel);
-				context.write(t.toString(), distAndLabel);
+				strTest = t.getAge()+"_"+t.getIncome()+"_"+t.getMarriage()+"_"+t.getGender()+"_"+t.getChildren();
+				context.write(strTest, distAndLabel);
 			}
 			
 		}
 	}
 	//---------------------END MAP------------------------
-	public static class KNNReducer extends Reducer<Text, IntWritable, Text, IntWritable>{
+	public static class KNNReducer extends Reducer<Text, Text, Text, Text>{
 		
 		
-		Map<double, String> labelDistTuple = new HashMap<double, String>();
+		Map<String, String> labelDistTuple = new HashMap<String, String>();
 		private Text label = new Text();
 		String key;
 		double value;
@@ -226,11 +228,12 @@ public class KNNMapReduce {
 		{
 			for(Text t: values)
 			{
-				String[] keyvalue = t.split(","); 
-				labelDistTuple.put(Double.parseDouble(keyvalue[1]),keyvalue[0]);
+				String rLine = t.toString();
+				String[] keyvalue = rLine.split(","); 
+				labelDistTuple.put(keyvalue[1],keyvalue[0]);
 			}
 			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-			Map<double, String> sortedMap = 
+			Map<String, String> sortedMap = 
 					labelDistTuple.entrySet().stream()
 				    .sorted(Entry.comparingByValue())
 				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
@@ -267,7 +270,7 @@ public class KNNMapReduce {
 		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
 		int k = Integer.parseInt(args[3]);
 		conf.setInt("K", k); //the number of k-nearest 
-		job.waitForCompleion(true);
+		//job.waitForCompletion(true);
 		//Counters counter = job.getCounters();
 		//System.out.println("Input Records: "+counters.findCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
 		System.exit(job.waitForCompletion(true)?0:1);
