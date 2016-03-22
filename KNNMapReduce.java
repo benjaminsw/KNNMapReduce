@@ -1,8 +1,25 @@
+import java.io.IOException;
+import java.util.Scanner;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Counters;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.TaskCounter;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+
 import java.io.BufferedReader;
 import java.util.StringTokenizer;
-
 import javax.security.auth.login.Configuration;
 import javax.xml.soap.Text;
+
 
 //package KNNMapReduce;
 
@@ -198,7 +215,7 @@ public class KNNMapReduce {
 				labelDistTuple.put(Double.parseDouble(keyvalue[1]),keyvalue[0]);
 			}
 			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-			Map<double, String> sortedMap = 
+			Map<String, double> sortedMap = 
 					labelDistTuple.entrySet().stream()
 				    .sorted(Entry.comparingByValue())
 				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
