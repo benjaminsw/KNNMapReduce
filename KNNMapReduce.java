@@ -162,7 +162,7 @@ public class KNNMapReduce {
 		public void setup(Context context)throws IOException
 		{	
 			//get file from context
-			Configuration conf = context.getConfiguaration();
+			Configuration conf = context.getConfiguration();
 			URI [] cacheFiles = context.getCacheFiles();
 			String [] fn = cacheFiles[0].toString().split('#');
 			String str;
@@ -213,6 +213,7 @@ public class KNNMapReduce {
 		
 		Map<String, String> labelDistTuple = new HashMap<String, String>();
 		private Text label = new Text();
+		private Text feature = new Text();
 		String key;
 		double value;
 		
@@ -245,7 +246,8 @@ public class KNNMapReduce {
 			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
 			                        Collections.frequency(labList, o2))).orElse(null);
 			label.set(maxOccurredElement);
-			context.write(key, label);
+			feature.set(keyvalue[0]);
+			context.write(feature, label);
 		}
 		
 		
