@@ -19,6 +19,11 @@ import java.io.BufferedReader;
 import java.util.StringTokenizer;
 import javax.security.auth.login.Configuration;
 import javax.xml.soap.Text;
+import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 
 //package KNNMapReduce;
