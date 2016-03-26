@@ -178,7 +178,7 @@ public class KNNMapReduce {
 		}
 
 		//perform map step
-		public void mapper(Object key, Text value, Context context)throws IOException, InteruptedIOException
+		public void mapper(Object key, Text value, Context context)throws IOException, InterruptedIOException
 		{	
 			String strDistAndLabel;	
 			String rLine = value.toString();
@@ -213,8 +213,6 @@ public class KNNMapReduce {
 		
 		Map<String, String> labelDistTuple = new HashMap<String, String>();
 		private Text label = new Text();
-		private Text feature = new Text();
-		String key;
 		double value;
 		
 		//the setup function is run once pre-processing data(get test set)
@@ -222,7 +220,9 @@ public class KNNMapReduce {
 		{	
 			//get K from context
 			Configuration conf =  context.getConfiguration();
-			int K = conf.getInt("K");
+			//int K = conf.getInt("K");
+			String paramK = conf.get("paramK");
+			int K = Integer.parseInt(paramK);
 
 		}
 		public void reducer(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
@@ -246,8 +246,7 @@ public class KNNMapReduce {
 			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
 			                        Collections.frequency(labList, o2))).orElse(null);
 			label.set(maxOccurredElement);
-			feature.set(keyvalue[0]);
-			context.write(feature, label);
+			context.write(key, label);
 		}
 		
 		
@@ -270,8 +269,10 @@ public class KNNMapReduce {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
-		int k = Integer.parseInt(args[3]);
-		conf.setInt("K", k); //the number of k-nearest 
+		//int k = Integer.parseInt(args[3]);
+		//setInt("K", k); //the number of k-nearest
+		String strK = args[3];
+		conf.set("paramK",strK);
 		//job.waitForCompletion(true);
 		//Counters counter = job.getCounters();
 		//System.out.println("Input Records: "+counters.findCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
