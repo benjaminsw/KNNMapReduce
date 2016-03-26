@@ -15,12 +15,13 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-
+import java.util.stream.Collectors;
 import java.io.BufferedReader;
 import java.util.StringTokenizer;
 //import javax.security.auth.login.Configuration;
 //import javax.xml.soap.Text;
 import java.util.*;
+import java.io.FileReader;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -134,7 +135,7 @@ public class KNNMapReduce {
 	//class KNNMapper for processing map step
 	public static class KNNMapper extends Mapper<Object, Text, Text, Text>
 	{	
-		private Text distAndLabel;	
+		private Text distAndLabel,testFeature;	
 		//variable test is to store the testing data
 		//http://stackoverflow.com/questions/10416653/best-way-to-store-a-table-of-data
 	    private ArrayList<RowData> test = new ArrayList<RowData>();
@@ -164,7 +165,7 @@ public class KNNMapReduce {
 			//get file from context
 			Configuration conf = context.getConfiguration();
 			URI [] cacheFiles = context.getCacheFiles();
-			String [] fn = cacheFiles[0].toString().split('#');
+			String [] fn = cacheFiles[0].toString().split("#");
 			String str;
 			BufferedReader br = new BufferedReader(new FileReader(fn[1]));//localname??
 			str = br.readLine();
@@ -202,7 +203,9 @@ public class KNNMapReduce {
 				distAndLabel = new Text();
 				distAndLabel.set(strDistAndLabel);
 				strTest = t.getAge()+"_"+t.getIncome()+"_"+t.getMarriage()+"_"+t.getGender()+"_"+t.getChildren();
-				context.write(strTest, distAndLabel);
+				testFeature = new Text();
+				testFeature.set(strTest);
+				context.write(testFeature, distAndLabel);
 			}
 			
 		}
@@ -268,7 +271,8 @@ public class KNNMapReduce {
 		//4. number of neighbours(k) for vote
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
+		//job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
+		job.addCacheFile(new URI("/home/bwi/cache/test.txt#test"));
 		//int k = Integer.parseInt(args[3]);
 		//setInt("K", k); //the number of k-nearest
 		String strK = args[3];
