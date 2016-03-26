@@ -15,6 +15,8 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import java.util.*;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import java.io.BufferedReader;
 import java.util.StringTokenizer;
@@ -53,7 +55,7 @@ public class KNNMapReduce {
     	public RowData(){}
     	public RowData(String rowInput)
     	{
-    		String[] features = rowInput.split(" ");
+    		String[] features = rowInput.split("\\s*,\\s*");
     		this.age = Integer.parseInt(features[0]);
     		this.income = Integer.parseInt(features[1]);
     		this.marriage = features[2];
@@ -168,22 +170,22 @@ public class KNNMapReduce {
 			String [] fn = cacheFiles[0].toString().split("#");
 			String str;
 			BufferedReader br = new BufferedReader(new FileReader(fn[1]));//localname??
-			str = br.readLine();
 			//RowData test = new RowData();
-			while(br!=null){
+			//while(br!=null){
+			//http://stackoverflow.com/questions/13405822/using-bufferedreader-readline-in-a-while-loop-properly
+			for (String line = br.readLine(); line != null; line = br.readLine()) {
 				//add data to data structure
-				test.add(new RowData(str));
-				str = br.readLine();
+				test.add(new RowData(line));
 			}
 			br.close();
 		}
 
 		//perform map step
-		public void mapper(Object key, Text value, Context context)throws IOException, InterruptedIOException
+		public void mapper(Object key, Text value, Context context)throws IOException, InterruptedIOException, InterruptedException
 		{	
 			String strDistAndLabel;	
 			String rLine = value.toString();
-			StringTokenizer tokens = new StringTokenizer(rLine, ",");
+			StringTokenizer tokens = new StringTokenizer(rLine, "\\s*,\\s*");
 			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
 			trainIncome = scaling(Double.parseDouble(tokens.nextToken()), minIncome, maxIncome);
 			trainMarriage = tokens.nextToken();
@@ -229,7 +231,10 @@ public class KNNMapReduce {
 
 		}
 		public void reducer(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
-		{
+		{	
+			int count=0;
+			int max=0;
+			String classLabel="";
 			for(Text t: values)
 			{
 				String rLine = t.toString();
@@ -244,11 +249,20 @@ public class KNNMapReduce {
 				                              (e1, e2) -> e1, LinkedHashMap::new));
 			//get only labels to do a majority vote: http://stackoverflow.com/questions/1026723/how-to-convert-a-map-to-list-in-java
 			List<String> labList = new ArrayList<String>(sortedMap.values());
-			//get most elements occued: http://stackoverflow.com/questions/19031213/java-get-most-common-element-in-a-list
-			String maxOccurredElement = labList.stream()
-			        .reduce(BinaryOperator.maxBy((o1, o2) -> Collections.frequency(labList, o1) -
-			                        Collections.frequency(labList, o2))).orElse(null);
-			label.set(maxOccurredElement);
+			
+			Set uniqueLabels = new HashSet(labList);
+			//http://www.coderanch.com/t/381829/java/java/Casting-Object-String
+			String[] tmpClass = (String[]) uniqueLabels.toArray(new String[uniqueLabels.size()]);
+			for(String l: tmpClass){
+				count = Collections.frequency(labList, l);
+				if(count>max)
+				{
+					max=count;
+					classLabel=l;
+				}
+			}
+
+			label.set(classLabel);
 			context.write(key, label);
 		}
 		
@@ -262,6 +276,8 @@ public class KNNMapReduce {
 		job.setMapperClass(KNNMapper.class);
 		job.setCombinerClass(KNNReducer.class);
 		job.setReducerClass(KNNReducer.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(Text.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
 		//sending parameters to MR
