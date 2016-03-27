@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
+//import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -15,13 +15,11 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.util.*;
+
 import java.util.Collections;
 import java.util.stream.Collectors;
 import java.io.BufferedReader;
 import java.util.StringTokenizer;
-//import javax.security.auth.login.Configuration;
-//import javax.xml.soap.Text;
 import java.util.*;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -40,7 +38,6 @@ import java.util.Map.Entry;
 
 
 //package KNNMapReduce;
-
 public class KNNMapReduce {
 	
 	
@@ -287,8 +284,8 @@ public class KNNMapReduce {
 		//4. number of neighbours(k) for vote
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
-		//job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
-		job.addCacheFile(new URI("/home/bwi/cache/test.txt#test"));
+		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
+		//job.addCacheFile(new URI("/home/bwi/cache/test.txt#test"));
 		//int k = Integer.parseInt(args[3]);
 		//setInt("K", k); //the number of k-nearest
 		String strK = args[3];
