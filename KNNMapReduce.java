@@ -1,10 +1,8 @@
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-//import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -16,10 +14,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 
-import java.util.Collections;
 import java.util.stream.Collectors;
 import java.io.BufferedReader;
-import java.util.StringTokenizer;
 import java.util.*;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -27,19 +23,10 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-
 
 //package KNNMapReduce;
 public class KNNMapReduce {
-	
 	
     //class row to create instance for each row
     public static class RowData
@@ -100,6 +87,9 @@ public class KNNMapReduce {
     		this.trainMarriage = trainMarriage;
     		this.trainGender = trainGender;
     		this.trainChildren = trainChildren;
+    		totalDistance = Math.sqrt(pseudoEuclideanDist(trainAge, testAge)+ pseudoEuclideanDist(trainIncome, testIncome))+
+					hammingDist(trainMarriage, testMarriage)+hammingDist(trainGender, testGender)+
+					hammingDist(trainChildren, testChildren);
     	}
 
     	public double pseudoEuclideanDist(double x1,double x2)
@@ -116,36 +106,64 @@ public class KNNMapReduce {
     			return 1;
     		}
     	}
-    	public void computeDistance()
-    	{
-    		totalDistance = Math.sqrt(pseudoEuclideanDist(trainAge, testAge)+ pseudoEuclideanDist(trainIncome, testIncome))+
-    						hammingDist(trainMarriage, testMarriage)+hammingDist(trainGender, testGender)+
-    						hammingDist(trainChildren, testChildren);
-    	}
+    	
     	public double getTotalDistance(){
     		return totalDistance;
+    		
     	}
     	
     }
-    //class DistLabelWritable extend writable
-    //http://hadooptutorial.info/creating-custom-hadoop-writable-data-type/
-    
-    
+    //http://beginnersbook.com/2013/12/java-arraylist-of-object-sort-example-comparable-and-comparator/
+    public static class DistNTest implements Comparable<DistNTest>{
+    	private double dist;
+    	private RowData t;
+    	public DistNTest(){}
+    	public DistNTest(double dist, RowData t){
+    		this.dist = dist;
+    		this.t= t;
+    	}
+    	public RowData getT(){
+    		return t;
+    	}
+    	public double getDist(){
+    		return dist;
+    	}
+    	//http://www.tutorialspoint.com/java/number_compareto.htm
+    	@Override
+    	public int compareTo(DistNTest compareDist) {
+            double compareDistance=((DistNTest)compareDist).getDist();
+            /* For Ascending order*/
+            if(this.dist==compareDistance){
+            	return 0;
+            }else if (this.dist>compareDistance){
+            	return 1;
+            }//else if (this.dist<compareDistance){
+            	//return -1;
+            //}
+            return -1;
+    	}
+    }
+        
 	//class KNNMapper for processing map step
 	public static class KNNMapper extends Mapper<Object, Text, Text, Text>
 	{	
+		private RowData rowData;
+		private DistNTest tmpDistNTest;
 		private Text distAndLabel,testFeature;	
 		//variable test is to store the testing data
 		//http://stackoverflow.com/questions/10416653/best-way-to-store-a-table-of-data
 	    private ArrayList<RowData> test = new ArrayList<RowData>();
-	    String strTest;
-	    double trainAge, testAge;
-	    double trainIncome, testIncome;
-	    String trainMarriage, testMarriage;
-	    String trainGender, testGender;
-	    String trainChildren, testChildren;
-	    String trainLabel, testLabel;
-	    double totalDist;
+	    private ArrayList<DistNTest> distArray = new ArrayList<DistNTest>();
+	    private String strTest;
+	    private double trainAge, testAge;
+	    private double trainIncome, testIncome;
+	    private String trainMarriage, testMarriage;
+	    private String trainGender, testGender;
+	    private String trainChildren, testChildren;
+	    private String trainLabel;
+	    private double totalDist;
+	    private int K;
+	    private String strDistAndLabel;
 	    
 	    //ranges of continuous input data
 	    double minAge = 18;
@@ -165,10 +183,10 @@ public class KNNMapReduce {
 			Configuration conf = context.getConfiguration();
 			URI [] cacheFiles = context.getCacheFiles();
 			String [] fn = cacheFiles[0].toString().split("#");
-			String str;
+			
 			BufferedReader br = new BufferedReader(new FileReader(fn[1]));//localname??
-			//RowData test = new RowData();
-			//while(br!=null){
+			String paramK = conf.get("paramK");
+			K = Integer.parseInt(paramK);
 			//http://stackoverflow.com/questions/13405822/using-bufferedreader-readline-in-a-while-loop-properly
 			for (String line = br.readLine(); line != null; line = br.readLine()) {
 				//add data to data structure
@@ -178,17 +196,16 @@ public class KNNMapReduce {
 		}
 
 		//perform map step
-		public void mapper(Object key, Text value, Context context)throws IOException, InterruptedIOException, InterruptedException
-		{	
-			String strDistAndLabel;	
+		public void map(Object key, Text value, Context context)throws IOException, InterruptedIOException, InterruptedException
+		{		
 			String rLine = value.toString();
-			StringTokenizer tokens = new StringTokenizer(rLine, "\\s*,\\s*");
-			trainAge = scaling(Double.parseDouble(tokens.nextToken()),minAge, maxAge);
-			trainIncome = scaling(Double.parseDouble(tokens.nextToken()), minIncome, maxIncome);
-			trainMarriage = tokens.nextToken();
-			trainGender = tokens.nextToken();
-			trainChildren = tokens.nextToken();
-			trainLabel = tokens.nextToken();
+			String[] content=rLine.split(",");
+			trainAge = scaling(Double.parseDouble(content[0]),minAge, maxAge);
+			trainIncome = scaling(Double.parseDouble(content[1]), minIncome, maxIncome);
+			trainMarriage = content[2];
+			trainGender = content[3];
+			trainChildren =content[4];
+			trainLabel = content[5];
 			for(RowData t:test)
 			{	testAge = scaling(t.getAge(),minAge, maxAge);
 				testIncome = scaling(t.getIncome(), minIncome, maxIncome);
@@ -198,80 +215,103 @@ public class KNNMapReduce {
 				ComputeDistance dist = new ComputeDistance(testAge, testIncome, testMarriage, testGender, testChildren,
 															trainAge, trainIncome, trainMarriage, trainGender, trainChildren);
 				totalDist = dist.getTotalDistance();
-				strDistAndLabel = String.valueOf(totalDist)+","+trainLabel;
+				distArray.add(new DistNTest(totalDist,t));
+			}
+			Collections.sort(distArray);
+			for(int i=0; i<K; i++){
+				tmpDistNTest = distArray.get(i);
+				totalDist = tmpDistNTest.getDist();
+				rowData = tmpDistNTest.getT();
+				strDistAndLabel = totalDist+","+trainLabel;
 				distAndLabel = new Text();
 				distAndLabel.set(strDistAndLabel);
-				strTest = t.getAge()+"_"+t.getIncome()+"_"+t.getMarriage()+"_"+t.getGender()+"_"+t.getChildren();
+				strTest = rowData.getAge()+"_"+rowData.getIncome()+"_"+rowData.getMarriage()+"_"+rowData.getGender()+"_"+rowData.getChildren();
 				testFeature = new Text();
 				testFeature.set(strTest);
 				context.write(testFeature, distAndLabel);
+				
 			}
-			
 		}
 	}
 	//---------------------END MAP------------------------
-	public static class KNNReducer extends Reducer<Text, Text, Text, Text>{
-		
-		
-		Map<String, String> labelDistTuple = new HashMap<String, String>();
-		private Text label = new Text();
-		double value;
-		
-		//the setup function is run once pre-processing data(get test set)
-		public void setup(Context context)throws IOException
-		{	
-			//get K from context
-			Configuration conf =  context.getConfiguration();
-			//int K = conf.getInt("K");
-			String paramK = conf.get("paramK");
-			int K = Integer.parseInt(paramK);
+	public static class DistLabelTuple
+	{
+	    private final String key;
+	    private final Double value;
 
-		}
-		public void reducer(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
+	    public DistLabelTuple(String value, String key)
+	    {	
+	    	this.value = Double.parseDouble(value);
+	        this.key   = key; 
+	    }
+
+	    public String getLabel()   { return key; }
+	    public Double getDist() { return value; }
+	    
+	    @Override
+	    public boolean equals(Object arg0) {
+	        boolean flag = false;
+	        DistLabelTuple kv = (DistLabelTuple) arg0;
+	        if(null!= kv && kv.getLabel().equalsIgnoreCase(key) ){
+	            flag = true;
+	        }
+	        return flag;
+	    }
+	}
+	public static class DistComparator implements Comparator<DistLabelTuple> {
+		@Override
+		public int compare(DistLabelTuple o1, DistLabelTuple o2) {
+		    if (o1.getDist() > o2.getDist()) {
+		        return 1;
+		    } else if (o1.getDist() < o2.getDist()) {
+		        return -1;
+		    }
+		    return 0;
+		}}
+	
+	public static class KNNReducer extends Reducer<Text, Text, Text, Text>{
+		 
+		private ArrayList<DistLabelTuple> distNLabel = new ArrayList<DistLabelTuple>();
+		//private ArrayList<DistLabelTuple> kNeighbour;
+		private Text label = new Text();
+		private List<DistLabelTuple> kNeighbour ;
+		//the setup function is run once pre-processing data(get test set)
+		public void reduce(Text key, Iterable<Text> values, Context context)throws IOException, InterruptedException
 		{	
 			int count=0;
-			int max=0;
+			int max=-1;
 			String classLabel="";
 			for(Text t: values)
 			{
 				String rLine = t.toString();
 				String[] keyvalue = rLine.split(","); 
-				labelDistTuple.put(keyvalue[1],keyvalue[0]);
+				distNLabel.add(new DistLabelTuple(keyvalue[0],keyvalue[1]));
+				
 			}
-			//sort HashMap : http://stackoverflow.com/questions/8119366/sorting-hashmap-by-values
-			Map<String, String> sortedMap = 
-					labelDistTuple.entrySet().stream()
-				    .sorted(Entry.comparingByValue())
-				    .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-				                              (e1, e2) -> e1, LinkedHashMap::new));
-			//get only labels to do a majority vote: http://stackoverflow.com/questions/1026723/how-to-convert-a-map-to-list-in-java
-			List<String> labList = new ArrayList<String>(sortedMap.values());
-			
-			Set uniqueLabels = new HashSet(labList);
-			//http://www.coderanch.com/t/381829/java/java/Casting-Object-String
-			String[] tmpClass = (String[]) uniqueLabels.toArray(new String[uniqueLabels.size()]);
-			for(String l: tmpClass){
-				count = Collections.frequency(labList, l);
-				if(count>max)
-				{
-					max=count;
-					classLabel=l;
-				}
-			}
-
+			//http://stackoverflow.com/questions/14475556/how-to-sort-arraylist-of-objects
+			Collections.sort(distNLabel, new DistComparator());
+			kNeighbour = new ArrayList<>(distNLabel);
+			Set<DistLabelTuple> uniqueNeigbour = new HashSet<DistLabelTuple>(kNeighbour);
+	        for (DistLabelTuple uniqN : uniqueNeigbour) {
+	            count= Collections.frequency(kNeighbour, uniqN);
+	            if(count>max){
+	            	max = count;
+	            	classLabel = uniqN.getLabel();
+	            }
+	        }
 			label.set(classLabel);
 			context.write(key, label);
 		}
-		
 		
 	}
 	//--------------------END REDUCE----------------------
 	public static void main(String[] args) throws Exception{
 		Configuration conf = new Configuration();
+		String strK = args[3];
+		conf.set("paramK",strK);
 		Job job = Job.getInstance(conf, "k-nearest neighbour");
 		job.setJarByClass(KNNMapReduce.class);
 		job.setMapperClass(KNNMapper.class);
-		job.setCombinerClass(KNNReducer.class);
 		job.setReducerClass(KNNReducer.class);
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
@@ -285,14 +325,6 @@ public class KNNMapReduce {
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 		job.addCacheFile(new URI(args[2]));//e.g. "/home/bwi/cache/file1.txt#first"
-		//job.addCacheFile(new URI("/home/bwi/cache/test.txt#test"));
-		//int k = Integer.parseInt(args[3]);
-		//setInt("K", k); //the number of k-nearest
-		String strK = args[3];
-		conf.set("paramK",strK);
-		//job.waitForCompletion(true);
-		//Counters counter = job.getCounters();
-		//System.out.println("Input Records: "+counters.findCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
 		System.exit(job.waitForCompletion(true)?0:1);
 	}
 }
