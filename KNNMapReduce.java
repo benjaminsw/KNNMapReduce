@@ -63,7 +63,7 @@ public class KNNMapReduce {
     	}
     }
     
-	//overwrite IntWritable to write distance and label
+	//to compute distance between two data points
     public static class ComputeDistance
     {
     	double trainAge, testAge;
